@@ -1,0 +1,111 @@
+name: CD
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types:
+      - completed
+
+env:
+  RUST_TOOLCHAIN: stable
+  TOOLCHAIN_PROFILE: minimal
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up SSH
+        uses: webfactory/ssh-agent@v0.5.3
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Add server to known_hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan 42.112.26.113 >> ~/.ssh/known_hosts
+
+      # - name: cargo build
+      #   run: cargo build
+
+      # - name: Check if directory exists
+      #   uses: appleboy/ssh-action@v1.2.0
+      #   with:
+      #     host: 42.112.26.113
+      #     username: root
+      #     key: ${{ secrets.SSH_PRIVATE_KEY }}
+      #     port: 22
+      #     script: |
+      #       if [ ! -d /opt/meme_be ]; then
+      #         mkdir -p /opt/meme_be
+      #       fi
+
+      - name: Check if directory exists
+        run: |
+          ssh -T root@42.112.26.113 << 'EOF'
+            if [ ! -d /opt/meme_be ]; then
+              mkdir -p /opt/meme_be
+            fi
+          EOF
+
+      - name: Copy files via SCP
+        run: |
+          scp -r target/debug/mammothon_meme_be-cli root@42.112.26.113:/opt/meme_be
+
+      - name: Execute remote commands
+        run: |
+          ssh root@42.112.26.113 << 'EOF'
+            cd /opt/meme_be
+            ./mammothon_meme_be-cli start
+          EOF
+
+  # test:
+  #   name: Run Tests
+  #   runs-on: ubuntu-latest
+
+  #   permissions:
+  #     contents: read
+
+  #   services:
+  #     redis:
+  #       image: redis
+  #       options: >-
+  #         --health-cmd "redis-cli ping"
+  #         --health-interval 10s
+  #         --health-timeout 5s
+  #         --health-retries 5
+  #       ports:
+  #         - "6379:6379"
+  #     postgres:
+  #       image: postgres
+  #       env:
+  #         POSTGRES_DB: postgres_test
+  #         POSTGRES_USER: postgres
+  #         POSTGRES_PASSWORD: postgres
+  #       ports:
+  #         - "5432:5432"
+  #       # Set health checks to wait until postgres has started
+  #       options: --health-cmd pg_isready
+  #         --health-interval 10s
+  #         --health-timeout 5s
+  #         --health-retries 5
+
+  #   steps:
+  #     - name: Checkout the code
+  #       uses: actions/checkout@v4
+  #     - uses: dtolnay/rust-toolchain@stable
+  #       with:
+  #         toolchain: ${{ env.RUST_TOOLCHAIN }}
+  #     - name: Setup Rust cache
+  #       uses: Swatinem/rust-cache@v2
+  #     - name: Run cargo test
+  #       uses: actions-rs/cargo@v1
+  #       with:
+  #         command: test
+  #         args: --all-features --all
+  #       env:
+  #         REDIS_URL: redis://localhost:${{job.services.redis.ports[6379]}}
+  #         DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres_test
