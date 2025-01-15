@@ -1,4 +1,7 @@
 use async_trait::async_trait;
+use axum::extract::Extension;
+use axum::Router as AxumRouter;
+
 use loco_rs::{
     app::{AppContext, Hooks, Initializer},
     bgworker::Queue,
@@ -8,6 +11,9 @@ use loco_rs::{
     task::Tasks,
     Result,
 };
+use std::env;
+
+use convex::ConvexClient;
 
 use crate::controllers;
 
@@ -45,5 +51,16 @@ impl Hooks for App {
     }
     fn register_tasks(_tasks: &mut Tasks) {
         // tasks-inject (do not remove)
+    }
+
+    async fn after_routes(mut router: AxumRouter, _ctx: &AppContext) -> Result<AxumRouter> {
+        // use AxumRouter to mount your routes and return an AxumRouter
+        dotenvy::from_filename(".env.local").ok();
+        dotenvy::dotenv().ok();
+
+        let deployment_url = env::var("CONVEX_URL").unwrap();
+        let client = ConvexClient::new(&deployment_url).await.unwrap();
+        router = router.layer(Extension(client));
+        Ok(router)
     }
 }

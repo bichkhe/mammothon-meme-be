@@ -18,49 +18,53 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Set up SSH
-        uses: webfactory/ssh-agent@v0.5.3
+      - name: Check if /opt/meme_be directory exists
+        uses: appleboy/ssh-action@v1.2.0
         with:
-          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-
-      - name: Add server to known_hosts
-        run: |
-          mkdir -p ~/.ssh
-          ssh-keyscan 42.112.26.113 >> ~/.ssh/known_hosts
-
-      # - name: cargo build
-      #   run: cargo build
-
-      # - name: Check if directory exists
-      #   uses: appleboy/ssh-action@v1.2.0
-      #   with:
-      #     host: 42.112.26.113
-      #     username: root
-      #     key: ${{ secrets.SSH_PRIVATE_KEY }}
-      #     port: 22
-      #     script: |
-      #       if [ ! -d /opt/meme_be ]; then
-      #         mkdir -p /opt/meme_be
-      #       fi
-
-      - name: Check if directory exists
-        run: |
-          ssh -T root@42.112.26.113 << 'EOF'
+          host: 42.112.26.113
+          username: root
+          password: ${{ secrets.SSH_PASSWORD }}
+          port: 22
+          script: |
             if [ ! -d /opt/meme_be ]; then
               mkdir -p /opt/meme_be
             fi
-          EOF
 
-      - name: Copy files via SCP
+      - name: Build project
         run: |
-          scp -r target/debug/mammothon_meme_be-cli root@42.112.26.113:/opt/meme_be
+          docker build -t mammothon_meme_be-cli:latest .
+          docker save -o mammothon_meme_be-cli.tar mammothon_meme_be-cli:latest
+          ls -ld mammothon_meme_be-cli.tar
+          chmod 666 mammothon_meme_be-cli.tar
 
-      - name: Execute remote commands
-        run: |
-          ssh root@42.112.26.113 << 'EOF'
-            cd /opt/meme_be
-            ./mammothon_meme_be-cli start
-          EOF
+      - name: Copy files to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: 42.112.26.113
+          username: root
+          password: ${{ secrets.SSH_PASSWORD }}
+          port: 22
+          source: "mammothon_meme_be-cli.tar"
+          target: /opt/meme_be
+
+      - name: Start service
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: 42.112.26.113
+          username: root
+          password: ${{ secrets.SSH_PASSWORD }}
+          port: 22
+          script: |
+            docker load -i /opt/meme_be/mammothon_meme_be-cli.tar
+
+            CONTAINER_NAME="mammothon_meme_be-cli"
+            # Check if the container exists
+            if docker ps -a --filter "name=$CONTAINER_NAME" --format '{{.Names}}' | grep -w $CONTAINER_NAME > /dev/null; then
+              echo "Container $CONTAINER_NAME exists."
+              docker stop $CONTAINER_NAME
+              docker rm $CONTAINER_NAME
+            fi
+            docker run -d -p 5150:5150 --name $CONTAINER_NAME $CONTAINER_NAME:latest
 
   # test:
   #   name: Run Tests
