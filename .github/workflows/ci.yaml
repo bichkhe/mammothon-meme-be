@@ -9,63 +9,6 @@ env:
   TOOLCHAIN_PROFILE: minimal
 
 jobs:
-  queue:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
-
-      - name: Check if PR was merged
-        id: check_merged
-        run: echo "::set-output name=merged::${{ github.event.pull_request.merged }}"
-
-      - name: Exit if PR was not merged
-        if: steps.check_merged.outputs.merged != 'true'
-        run: exit 0
-
-      - name: Add to queue
-        id: add_to_queue
-        uses: actions/github-script@v4
-        with:
-          script: |
-            const queue = await github.actions.listWorkflowRunsForRepo({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              workflow_id: context.workflow,
-              status: 'in_progress'
-            });
-            if (queue.data.total_count > 0) {
-              console.log('Another workflow is in progress. Adding to queue.');
-              return { continue: false };
-            } else {
-              console.log('No other workflows in progress. Proceeding.');
-              return { continue: true };
-            }
-          result-encoding: string
-
-      - name: Wait for previous workflow to finish
-        if: steps.add_to_queue.outputs.continue == 'false'
-        uses: actions/github-script@v4
-        with:
-          script: |
-            const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
-            let inProgress = true;
-            while (inProgress) {
-              const queue = await github.actions.listWorkflowRunsForRepo({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                workflow_id: context.workflow,
-                status: 'in_progress'
-              });
-              if (queue.data.total_count > 0) {
-                console.log('Another workflow is still in progress. Waiting...');
-                await delay(60000); // Wait for 1 minute
-              } else {
-                inProgress = false;
-              }
-            }
-            console.log('No other workflows in progress. Proceeding.');
-
   rustfmt:
     name: Check Style
     runs-on: ubuntu-latest
