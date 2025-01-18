@@ -1,4 +1,4 @@
-# Welcome to Loco :train:
+# Welcome to Mammothon-meme-be :train:
 
 [Loco](https://loco.rs) is a web and API framework running on Rust.
 
