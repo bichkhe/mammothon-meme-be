@@ -26,32 +26,20 @@ async fn get_tasks(
     let mut query_input = BTreeMap::new();
     let mut pagination = BTreeMap::new();
 
-    match params.limit {
-        Some(limit) => {
-            pagination.insert("limit".to_string(), Value::Float64(limit));
-        }
-        _ => {}
+    if let Some(limit) = params.limit {
+        pagination.insert("limit".to_string(), Value::Float64(limit));
     }
 
-    match params.cursor {
-        Some(cursor) => {
-            pagination.insert("cursor".to_string(), Value::String(cursor));
-        }
-        _ => {}
+    if let Some(cursor) = params.cursor {
+        pagination.insert("cursor".to_string(), Value::String(cursor));
     }
 
-    match params.is_completed {
-        Some(is_completed) => {
-            filter.insert("is_completed".to_string(), Value::Boolean(is_completed));
-        }
-        _ => {}
+    if let Some(is_completed) = params.is_completed {
+        filter.insert("is_completed".to_string(), Value::Boolean(is_completed));
     }
 
-    match params.text {
-        Some(text) => {
-            filter.insert("text".to_string(), Value::String(text));
-        }
-        _ => {}
+    if let Some(text) = params.text {
+        filter.insert("text".to_string(), Value::String(text));
     }
 
     query_input.insert("queryFilter".to_string(), Value::Object(filter.clone()));
@@ -73,7 +61,7 @@ async fn get_tasks(
     })
 }
 
-async fn create_task(Extension(mut db_client): Extension<ConvexClient>) -> Result<Response> {
+async fn create_task(Extension(mut _db_client): Extension<ConvexClient>) -> Result<Response> {
     // let task = BTreeMap::new();
     // let result = db_client
     //     .mutation(
