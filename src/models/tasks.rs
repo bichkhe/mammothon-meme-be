@@ -8,12 +8,3 @@ pub struct Task {
     #[serde(rename = "text")]
     pub text: String,
 }
-
-impl Default for Task {
-    fn default() -> Self {
-        Self {
-            is_completed: false,
-            text: "".to_string(),
-        }
-    }
-}

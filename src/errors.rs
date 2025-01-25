@@ -16,11 +16,11 @@ pub enum AppError {
 }
 
 impl AppError {
-    fn get_code(&self) -> u16 {
+    const fn get_code(&self) -> u16 {
         match self {
-            AppError::DbQuery { .. } => 4001,
-            AppError::ParseObject { .. } => 4002,
-            AppError::Unknown => 4000,
+            Self::DbQuery { .. } => 4001,
+            Self::ParseObject { .. } => 4002,
+            Self::Unknown => 4000,
         }
     }
 }
@@ -28,9 +28,8 @@ impl AppError {
 impl IntoResponse for AppError {
     fn into_response(self) -> Response {
         let status_code = match self {
-            AppError::DbQuery { .. } => StatusCode::INTERNAL_SERVER_ERROR,
-            AppError::ParseObject { .. } => StatusCode::BAD_REQUEST,
-            AppError::Unknown => StatusCode::INTERNAL_SERVER_ERROR,
+            Self::DbQuery { .. } | AppError::Unknown => StatusCode::INTERNAL_SERVER_ERROR,
+            Self::ParseObject { .. } => StatusCode::BAD_REQUEST,
         };
 
         let body = axum::Json(json!({

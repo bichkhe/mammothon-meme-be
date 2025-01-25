@@ -52,7 +52,6 @@ async fn get_tasks(
             query: e.to_string(),
         })?;
 
-    println!("task query: {:?}", task_query_result);
     let query_value = convert_func_result_to_value(task_query_result)?;
 
     let resp = TaskGetListResponse::new(query_value)?;

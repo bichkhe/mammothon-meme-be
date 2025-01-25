@@ -20,19 +20,18 @@ pub struct TaskGetListResponse {
 }
 
 impl TaskGetListResponse {
-    #[must_use]
+    #[allow(clippy::missing_errors_doc)]
     pub fn new(tasks_value: Value) -> Result<Self, AppError> {
         let task_json = tasks_value.export();
-        let response: TaskGetListResponse =
-            match serde_json::from_str(task_json.to_string().as_str()) {
-                Ok(t) => t,
-                Err(e) => {
-                    println!("parse object failed {e:#?}");
-                    return Err(AppError::ParseObject {
-                        reason: e.to_string(),
-                    });
-                }
-            };
+        let response: Self = match serde_json::from_str(task_json.to_string().as_str()) {
+            Ok(t) => t,
+            Err(e) => {
+                println!("parse object failed {e:#?}");
+                return Err(AppError::ParseObject {
+                    reason: e.to_string(),
+                });
+            }
+        };
         Ok(response)
     }
 }
