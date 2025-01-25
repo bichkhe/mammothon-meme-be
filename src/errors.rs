@@ -15,6 +15,16 @@ pub enum AppError {
     Unknown,
 }
 
+impl AppError {
+    fn get_code(&self) -> u16 {
+        match self {
+            AppError::DbQuery { .. } => 4001,
+            AppError::ParseObject { .. } => 4002,
+            AppError::Unknown => 4000,
+        }
+    }
+}
+
 impl IntoResponse for AppError {
     fn into_response(self) -> Response {
         let status_code = match self {
@@ -23,7 +33,10 @@ impl IntoResponse for AppError {
             AppError::Unknown => StatusCode::INTERNAL_SERVER_ERROR,
         };
 
-        let body = axum::Json(json!({ "error": self.to_string() }));
+        let body = axum::Json(json!({
+            "code": self.get_code(),
+            "msg": self.to_string()
+        }));
         (status_code, body).into_response()
     }
 }
