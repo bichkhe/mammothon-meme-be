@@ -1,25 +1,102 @@
-use axum::debug_handler;
-use axum::{extract::Extension, routing::get};
+use axum::{
+    extract::{Extension, Query},
+    routing::get,
+};
 use loco_rs::prelude::*;
 use std::collections::BTreeMap;
 
-use crate::views::home::HomeResponse;
-use convex::ConvexClient;
+use crate::errors::AppError;
+use crate::views::{home::HomeResponse, tasks::TaskGetListResponse};
+use convex::{ConvexClient, FunctionResult, Value};
+use serde::Deserialize;
 
-async fn create_user(Extension(mut db_client): Extension<ConvexClient>) -> Result<Response> {
-    let result = db_client.query("tasks:get", BTreeMap::new()).await.unwrap();
-    println!("{result:#?}");
-    format::json(HomeResponse::new("loco"))
+#[derive(Deserialize)]
+struct TaskQueryParams {
+    limit: Option<f64>,
+    cursor: Option<String>,
+    is_completed: Option<bool>,
+    text: Option<String>,
 }
 
-#[debug_handler]
-async fn current() -> Result<Response> {
+async fn get_tasks(
+    Extension(mut db_client): Extension<ConvexClient>,
+    Query(params): Query<TaskQueryParams>,
+) -> Result<Response, AppError> {
+    let mut filter = BTreeMap::new();
+    let mut query_input = BTreeMap::new();
+    let mut pagination = BTreeMap::new();
+
+    match params.limit {
+        Some(limit) => {
+            pagination.insert("limit".to_string(), Value::Float64(limit));
+        }
+        _ => {}
+    }
+
+    match params.cursor {
+        Some(cursor) => {
+            pagination.insert("cursor".to_string(), Value::String(cursor));
+        }
+        _ => {}
+    }
+
+    match params.is_completed {
+        Some(is_completed) => {
+            filter.insert("is_completed".to_string(), Value::Boolean(is_completed));
+        }
+        _ => {}
+    }
+
+    match params.text {
+        Some(text) => {
+            filter.insert("text".to_string(), Value::String(text));
+        }
+        _ => {}
+    }
+
+    query_input.insert("queryFilter".to_string(), Value::Object(filter.clone()));
+    query_input.insert("pagination".to_string(), Value::Object(pagination.clone()));
+
+    let task_query_result = db_client
+        .query("tasks:get", query_input)
+        .await
+        .map_err(|e| AppError::DbQuery {
+            query: e.to_string(),
+        })?;
+
+    println!("task query: {:?}", task_query_result);
+    let query_value = convert_func_result_to_value(task_query_result)?;
+
+    let resp = TaskGetListResponse::new(query_value)?;
+    format::json(resp).map_err(|e| AppError::ParseObject {
+        reason: e.to_string(),
+    })
+}
+
+async fn create_task(Extension(mut db_client): Extension<ConvexClient>) -> Result<Response> {
+    // let task = BTreeMap::new();
+    // let result = db_client
+    //     .mutation(
+    //         "tasks:create"
+    //     )
+    //     .await?;
+    // println!("{result:#?}");
     format::json(HomeResponse::new("loco"))
 }
 
 pub fn routes() -> Routes {
     Routes::new()
         .prefix("/api")
-        .add("/", get(current))
-        .add("/create_user", get(create_user))
+        .add("/get_tasks", get(get_tasks))
+        .add("/create_task", post(create_task))
+}
+
+fn convert_func_result_to_value(result: FunctionResult) -> Result<convex::Value, AppError> {
+    match result {
+        FunctionResult::Value(v) => Ok(v),
+        FunctionResult::ErrorMessage(e) => Err(AppError::DbQuery { query: e }),
+        FunctionResult::ConvexError(e) => Err(AppError::DbQuery {
+            query: e.to_string(),
+        }),
+    }
 }
