@@ -28,7 +28,7 @@ impl AppError {
 impl IntoResponse for AppError {
     fn into_response(self) -> Response {
         let status_code = match self {
-            Self::DbQuery { .. } | AppError::Unknown => StatusCode::INTERNAL_SERVER_ERROR,
+            Self::DbQuery { .. } | Self::Unknown => StatusCode::INTERNAL_SERVER_ERROR,
             Self::ParseObject { .. } => StatusCode::BAD_REQUEST,
         };
 
