@@ -45,7 +45,7 @@ jobs:
           username: root
           password: ${{ secrets.SSH_PASSWORD }}
           port: 22
-          source: "mammothon_meme_be-cli.tar"
+          source: "mammothon_meme_be-cli.tar,.env.dev"
           target: /opt/meme_be
 
       - name: Start service
@@ -56,6 +56,7 @@ jobs:
           password: ${{ secrets.SSH_PASSWORD }}
           port: 22
           script: |
+            mv /opt/meme_be/.env.dev /opt/meme_be/.env.local
             docker load -i /opt/meme_be/mammothon_meme_be-cli.tar
 
             CONTAINER_NAME="mammothon_meme_be-cli"
