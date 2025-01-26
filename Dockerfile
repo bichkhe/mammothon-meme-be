@@ -19,5 +19,6 @@ COPY --from=builder /usr/src/app/config/ /app/config/
 COPY --from=builder /usr/src/app/.env.dev .
 RUN mv .env.dev .env.local
 RUN chmod +x /app/mammothon_meme_be-cli
+EXPOSE 5150
 
 CMD ["./mammothon_meme_be-cli", "start", "-p", "5150"]
