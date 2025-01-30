@@ -21,4 +21,4 @@ RUN mv .env.dev .env.local
 RUN chmod +x /app/mammothon_meme_be-cli
 EXPOSE 5150
 
-CMD ["./mammothon_meme_be-cli", "start"]
+CMD ["./mammothon_meme_be-cli", "start", "-b", "0.0.0.0"]
