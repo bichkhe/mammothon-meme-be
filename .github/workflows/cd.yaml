@@ -56,7 +56,6 @@ jobs:
           password: ${{ secrets.SSH_PASSWORD }}
           port: 22
           script: |
-            mv /opt/meme_be/.env.dev /opt/meme_be/.env.local
             docker load -i /opt/meme_be/mammothon_meme_be-cli.tar
 
             CONTAINER_NAME="mammothon_meme_be-cli"
@@ -66,7 +65,7 @@ jobs:
               docker stop $CONTAINER_NAME
               docker rm $CONTAINER_NAME
             fi
-            docker run -d -p 5150:5150 --name $CONTAINER_NAME $CONTAINER_NAME:latest
+            docker run -p 5150:5150 -d --name $CONTAINER_NAME $CONTAINER_NAME:latest
 
   # test:
   #   name: Run Tests
