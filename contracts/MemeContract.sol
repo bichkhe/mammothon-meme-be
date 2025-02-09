@@ -94,6 +94,4 @@ contract MemeCoin is ERC20, Ownable {
     return 18;
     }
     // add to contract
-    
-
 }
