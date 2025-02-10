@@ -13,35 +13,29 @@ contract MemeCoin is ERC20, Ownable {
     uint256 private constant c = 1; // Giá khởi điểm
     uint256 public totalTokenSupply; // Tổng số token đã phát hành
     // cu
-    event MetadataUpdated(string newName, string newSymbol, string newMetadataURI);
-    event Buy(address indexed buyer, uint256 amount, uint256 price);
-    event Sell(address indexed seller, uint256 amount, uint256 value);
+    event MetadataUpdated(string newMetadataURI);
+    event Buy(address indexed buyer, uint256 amountETH, uint256 amountToken);
+    event Sell(address indexed seller, uint256 amountETH, uint256 amoumtToken);
 
-    constructor(string memory name_, string memory symbol_, string memory metadataURI_) ERC20(name_, symbol_) Ownable(msg.sender) {
-        _name = name_;
-        _symbol = symbol_;
+    constructor(
+        string memory name_,
+        string memory symbol_,
+        string memory metadataURI_
+    ) ERC20(name_, symbol_) Ownable(msg.sender) {
         metadataURI = metadataURI_;
     }
 
-     // Function to update metadata (only owner can call)
-    function updateMetadata(string memory newName, string memory newSymbol, string memory newMetadataURI) external onlyOwner {
-        _name = newName;
-        _symbol = newSymbol;
+    // Function to update metadata (only owner can call)
+    function updateMetadata(string memory newMetadataURI) external onlyOwner {
         metadataURI = newMetadataURI;
-        emit MetadataUpdated(newName, newSymbol, newMetadataURI);
-    }
-    function name() public view override returns (string memory) {
-        return _name;
-    }
-    
-    function symbol() public view override returns (string memory) {
-        return _symbol;
+        emit MetadataUpdated(newMetadataURI);
     }
 
     // return current price of token
     function getCurrentPrice() public view returns (uint256) {
-        return (totalTokenSupply + c)/PRECISION ;
+        return (totalTokenSupply + c);
     }
+
     function sqrt(uint256 x) internal pure returns (uint256) {
         uint256 z = (x + 1) / 2;
         uint256 y = x;
@@ -53,45 +47,56 @@ contract MemeCoin is ERC20, Ownable {
     }
     // return number token will return when buy with amount of money
     function calculateToken(uint256 amount) public view returns (uint256) {
-        uint256 curentPrice = totalTokenSupply;
+        uint256 curentPrice = getCurrentPrice();
         // Công thức: n = (-a + sqrt(a^2 + 2*b*amount)) / b
-        uint256 discriminant = curentPrice * curentPrice + (2 * amount * PRECISION);
+        uint256 discriminant = curentPrice * curentPrice + (2 * amount);
         uint256 sqrtDiscriminant = sqrt(discriminant);
         uint256 n = (sqrtDiscriminant - curentPrice) / b;
         return n;
     }
     function calculateTokenSell(uint256 amount) public view returns (uint256) {
-        uint256 currentPrice = totalTokenSupply ;
+        uint256 currentPrice = totalTokenSupply;
         uint256 value = (amount * (2 * currentPrice - amount + 1)) / 2;
-        return value ;
+        return value;
     }
-
     // buy token with amount, transfer token to sender and redundant
-    function buy(uint256 amount) public payable {
-        uint256 n = calculateToken(amount);
+    function buy() public payable {
+        uint256 n = calculateToken(msg.value);
         require(n > 0, "Amount is too small");
         uint256 finalPrice = (n + totalTokenSupply);
-        uint256 price = ((finalPrice + totalTokenSupply - 1 ) * n / 2 )/ PRECISION;
-        _mint(msg.sender, n );
+        uint256 price = (((finalPrice + totalTokenSupply - 1) * n) / 2);
+        _mint(msg.sender, n);
         // update balance of sender
-        totalTokenSupply += n ;
-        if (price < amount) {
-            payable(msg.sender).transfer(amount  - price);
+        totalTokenSupply += n;
+        // refund redundant money
+        if (msg.value > price) {
+            (bool success, ) = msg.sender.call{value: msg.value - price}("");
+            require(success, "Refund failed");
         }
+        emit Buy(msg.sender, msg.value, n);
     }
 
     // sell token with amount, transfer money to sender
     function sell(uint256 amount) public {
-        // check amout  > 0
-        require(amount > 0, "Amount is too small");
+        require(amount > 0, "Amount too small");
         uint256 value = calculateTokenSell(amount);
-        _burn(msg.sender, amount);
-        // update balance of sender
+        require(
+            address(this).balance >= value,
+            "Not enough balance in contract"
+        );
+
         totalTokenSupply -= amount;
-        payable(msg.sender).transfer(value/PRECISION);
+        _burn(msg.sender, amount);
+
+        (bool success, ) = msg.sender.call{value: value}("");
+        require(success, "Transfer failed");
+        emit Sell(msg.sender, amount, value);
     }
+
+    receive() external payable {} // Allow contract to receive ETH
+
     function decimals() public pure override returns (uint8) {
-    return 18;
+        return 0;
     }
     // add to contract
 }

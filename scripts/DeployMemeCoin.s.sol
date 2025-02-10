@@ -8,8 +8,8 @@ contract DeployMemeCoin is Script {
     function run(string memory name, string memory symbol, string memory metadata) external {
         vm.rpcUrl("https://base-sepolia.infura.io/v3/e11fea93e1e24107aa26935258904434");
         vm.startBroadcast();
-        address factoryAddress = address(0x5cF9348aF8ea48399E4715944a91a9982CC07921);
-        bytes32 salt = keccak256(abi.encodePacked("aaaa"));
+        address factoryAddress = address( 0x348933F25b16Df5b06032c426554887D939Bd857);
+        bytes32 salt = keccak256(abi.encodePacked("MemeCoinv1"));
         ContractFactory factory = ContractFactory(factoryAddress);
         address addr = factory.createSimpleContract(name, symbol, metadata, salt);
         console.log("Contract deployed at:", addr);
