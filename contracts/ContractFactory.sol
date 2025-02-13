@@ -20,12 +20,13 @@ contract ContractFactory is Ownable {
         string memory name,
         string memory symbol,
         string memory metadata,
+        uint256 initialPrice,
         bytes32 _salt
     ) external onlyOwner() returns (address) {
         bytes memory bytecode = type(MemeCoin).creationCode;
         bytes memory initCode = abi.encodePacked(
             bytecode,
-            abi.encode(name, symbol, metadata)
+            abi.encode(name, symbol, metadata, initialPrice)
         );
 
         address contractAddress;

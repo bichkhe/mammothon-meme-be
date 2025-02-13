@@ -3,7 +3,7 @@ pragma solidity ^0.8.20;
 
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-
+import "forge-std/console.sol";
 contract MemeCoin is ERC20, Ownable {
     string private _name;
     string private _symbol;
@@ -75,6 +75,8 @@ contract MemeCoin is ERC20, Ownable {
         uint256 currentPrice = getCurrentPrice();
         uint256 finalPrice = (n + currentPrice);
         uint256 price = (((finalPrice + currentPrice + 1) * n) / 2);
+        console.log("Price:", price);
+        console.log("token buy: ", n);
         _mint(msg.sender, n);
         // refund redundant money
         if (msg.value > price) {
@@ -91,6 +93,8 @@ contract MemeCoin is ERC20, Ownable {
         uint256 value = calculateTokenSell(amount);
         uint256 fee = (value * feePercentage) / 100; // Calculate fee
         uint256 finalValue = value - fee; // Deduct fee
+        console.log("Value:", value);
+        console.log("Blance:", address(this).balance);
         require(
             address(this).balance >= finalValue,
             "Not enough balance in contract"
