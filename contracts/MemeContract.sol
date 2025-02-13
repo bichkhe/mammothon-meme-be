@@ -8,10 +8,11 @@ contract MemeCoin is ERC20, Ownable {
     string private _name;
     string private _symbol;
     string public metadataURI;
-    uint256 private constant PRECISION = 1e18; // Hệ số thập phân
+    uint256 private constant PRECISION = 0; // Hệ số thập phân
     uint256 private constant b = 1; // Hằng số tuyến tính
-    uint256 private constant c = 1; // Giá khởi điểm
-    uint256 public totalTokenSupply; // Tổng số token đã phát hành
+    uint256 private initialPrice; // Giá khởi điểm
+    uint256 public feePercentage = 2;
+    address public feeRecipient; // Address to collect fees
     // cu
     event MetadataUpdated(string newMetadataURI);
     event Buy(address indexed buyer, uint256 amountETH, uint256 amountToken);
@@ -20,9 +21,17 @@ contract MemeCoin is ERC20, Ownable {
     constructor(
         string memory name_,
         string memory symbol_,
-        string memory metadataURI_
+        string memory metadataURI_,
+        uint256 initialPrice_
     ) ERC20(name_, symbol_) Ownable(msg.sender) {
+        initialPrice = initialPrice_;
         metadataURI = metadataURI_;
+        feeRecipient = msg.sender;
+    }
+
+    function setFeeRecipient(address newRecipient) external onlyOwner {
+        require(newRecipient != address(0), "Invalid recipient");
+        feeRecipient = newRecipient;
     }
 
     // Function to update metadata (only owner can call)
@@ -33,7 +42,7 @@ contract MemeCoin is ERC20, Ownable {
 
     // return current price of token
     function getCurrentPrice() public view returns (uint256) {
-        return (totalTokenSupply + c);
+        return (totalSupply() + initialPrice);
     }
 
     function sqrt(uint256 x) internal pure returns (uint256) {
@@ -55,7 +64,7 @@ contract MemeCoin is ERC20, Ownable {
         return n;
     }
     function calculateTokenSell(uint256 amount) public view returns (uint256) {
-        uint256 currentPrice = totalTokenSupply;
+        uint256 currentPrice = getCurrentPrice();
         uint256 value = (amount * (2 * currentPrice - amount + 1)) / 2;
         return value;
     }
@@ -63,11 +72,10 @@ contract MemeCoin is ERC20, Ownable {
     function buy() public payable {
         uint256 n = calculateToken(msg.value);
         require(n > 0, "Amount is too small");
-        uint256 finalPrice = (n + totalTokenSupply);
-        uint256 price = (((finalPrice + totalTokenSupply - 1) * n) / 2);
+        uint256 currentPrice = getCurrentPrice();
+        uint256 finalPrice = (n + currentPrice);
+        uint256 price = (((finalPrice + currentPrice + 1) * n) / 2);
         _mint(msg.sender, n);
-        // update balance of sender
-        totalTokenSupply += n;
         // refund redundant money
         if (msg.value > price) {
             (bool success, ) = msg.sender.call{value: msg.value - price}("");
@@ -79,18 +87,18 @@ contract MemeCoin is ERC20, Ownable {
     // sell token with amount, transfer money to sender
     function sell(uint256 amount) public {
         require(amount > 0, "Amount too small");
+        require(amount < totalSupply(),  "Amount is too big");
         uint256 value = calculateTokenSell(amount);
+        uint256 fee = (value * feePercentage) / 100; // Calculate fee
+        uint256 finalValue = value - fee; // Deduct fee
         require(
-            address(this).balance >= value,
+            address(this).balance >= finalValue,
             "Not enough balance in contract"
         );
-
-        totalTokenSupply -= amount;
         _burn(msg.sender, amount);
-
-        (bool success, ) = msg.sender.call{value: value}("");
+        (bool success, ) = msg.sender.call{value: finalValue}("");
         require(success, "Transfer failed");
-        emit Sell(msg.sender, amount, value);
+        emit Sell(msg.sender, amount, finalValue);
     }
 
     receive() external payable {} // Allow contract to receive ETH
@@ -98,5 +106,9 @@ contract MemeCoin is ERC20, Ownable {
     function decimals() public pure override returns (uint8) {
         return 0;
     }
+    function getContractBalance() public view returns (uint256) {
+        return address(this).balance;
+    }
+
     // add to contract
 }
