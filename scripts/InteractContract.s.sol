@@ -17,7 +17,7 @@ contract InteractMeme is Script {
         // uint256 balance = meme.balanceOf(address(0xCD86599DedD1A8E9d87dcEC37Dc8bE479e78cc30));
         // console.log("Address:", address(0xCD86599DedD1A8E9d87dcEC37Dc8bE479e78cc30));
         // console.log("Balance of this contract:", balance);
-        // meme.sell(40000000);
+        meme.sell(140000000);
         vm.stopBroadcast();
     }
 }

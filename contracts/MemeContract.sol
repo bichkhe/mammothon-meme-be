@@ -8,7 +8,7 @@ contract MemeCoin is ERC20, Ownable {
     string private _name;
     string private _symbol;
     string public metadataURI;
-    uint256 private constant PRECISION = 0; // Hệ số thập phân
+    uint8 private constant PRECISION = 5; // Hệ số thập phân
     uint256 private constant b = 1; // Hằng số tuyến tính
     uint256 private initialPrice; // Giá khởi điểm
     uint256 public feePercentage = 2;
@@ -108,7 +108,7 @@ contract MemeCoin is ERC20, Ownable {
     receive() external payable {} // Allow contract to receive ETH
 
     function decimals() public pure override returns (uint8) {
-        return 0;
+        return PRECISION;
     }
     function getContractBalance() public view returns (uint256) {
         return address(this).balance;
