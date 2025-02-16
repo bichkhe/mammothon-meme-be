@@ -10,14 +10,14 @@ contract InteractMeme is Script {
         vm.startBroadcast();
         address factoryAddress = address(0xb248eee0F286F15D5Dc491f535b7f0fC561D8Afa);
         MemeCoin meme = MemeCoin(payable(factoryAddress));
-        // uint256 cost = 0.01 ether;
-        // meme.buy{value:cost}();
+        uint256 cost = 0.01 ether;
+        meme.buy{value:cost}();
         uint256 balance = meme.getContractBalance();
         console.log("Balance of this contract:", balance);
         // uint256 balance = meme.balanceOf(address(0xCD86599DedD1A8E9d87dcEC37Dc8bE479e78cc30));
         // console.log("Address:", address(0xCD86599DedD1A8E9d87dcEC37Dc8bE479e78cc30));
         // console.log("Balance of this contract:", balance);
-        meme.sell(140000000);
+        //meme.sell(140000000);
         vm.stopBroadcast();
     }
 }

@@ -22,11 +22,12 @@ contract MemeCoin is ERC20, Ownable {
         string memory name_,
         string memory symbol_,
         string memory metadataURI_,
-        uint256 initialPrice_
-    ) ERC20(name_, symbol_) Ownable(msg.sender) {
+        uint256 initialPrice_,
+        address owner
+    ) ERC20(name_, symbol_) Ownable(owner) {
         initialPrice = initialPrice_;
         metadataURI = metadataURI_;
-        feeRecipient = msg.sender;
+        feeRecipient = owner;
     }
 
     function setFeeRecipient(address newRecipient) external onlyOwner {
@@ -56,16 +57,21 @@ contract MemeCoin is ERC20, Ownable {
     }
     // return number token will return when buy with amount of money
     function calculateToken(uint256 amount) public view returns (uint256) {
+        require(amount > 0, "Amount must be greater than 0");
         uint256 curentPrice = getCurrentPrice();
-        // Công thức: n = (-a + sqrt(a^2 + 2*b*amount)) / b
         uint256 discriminant = curentPrice * curentPrice + (2 * amount);
+        // Kiểm tra discriminant không bị tràn số
+        require(discriminant >= curentPrice * curentPrice, "Invalid amount");
         uint256 sqrtDiscriminant = sqrt(discriminant);
         uint256 n = (sqrtDiscriminant - curentPrice) / b;
+        // Kiểm tra n > 0
+        require(n > 0, "Amount is too small to mint any token");
         return n;
     }
+    // calculate amount of ether will return when sell amount token
     function calculateTokenSell(uint256 amount) public view returns (uint256) {
         uint256 currentPrice = getCurrentPrice();
-        uint256 value = (amount * (2 * currentPrice - amount + 1)) / 2;
+        uint256 value = (amount * (2 * currentPrice - amount - 1 )) / 2;
         return value;
     }
     // buy token with amount, transfer token to sender and redundant
@@ -74,7 +80,7 @@ contract MemeCoin is ERC20, Ownable {
         require(n > 0, "Amount is too small");
         uint256 currentPrice = getCurrentPrice();
         uint256 finalPrice = (n + currentPrice);
-        uint256 price = (((finalPrice + currentPrice + 1) * n) / 2);
+        uint256 price = (((finalPrice + currentPrice - 1) * n) / 2);
         console.log("Price:", price);
         console.log("token buy: ", n);
         _mint(msg.sender, n);

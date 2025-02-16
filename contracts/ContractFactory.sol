@@ -15,18 +15,20 @@ contract ContractFactory is Ownable {
     error DeploymentFailed(string reason);
 
     constructor(address initialOwner) Ownable(initialOwner) {
+        
     }
-    function createSimpleContract(
+    function createMemeContract(
         string memory name,
         string memory symbol,
         string memory metadata,
         uint256 initialPrice,
+        address owner,
         bytes32 _salt
     ) external onlyOwner() returns (address) {
         bytes memory bytecode = type(MemeCoin).creationCode;
         bytes memory initCode = abi.encodePacked(
             bytecode,
-            abi.encode(name, symbol, metadata, initialPrice)
+            abi.encode(name, symbol, metadata, owner, initialPrice)
         );
 
         address contractAddress;
