@@ -17,7 +17,7 @@ contract MemeCoin is ERC20, Ownable {
     event MetadataUpdated(string newMetadataURI);
     event Buy(address indexed buyer, uint256 amountETH, uint256 amountToken);
     event Sell(address indexed seller, uint256 amountETH, uint256 amoumtToken);
-
+    bytes32[] public transactions;
     constructor(
         string memory name_,
         string memory symbol_,
@@ -118,6 +118,12 @@ contract MemeCoin is ERC20, Ownable {
     }
     function getContractBalance() public view returns (uint256) {
         return address(this).balance;
+    }
+    function logTransaction(bytes32 transaction) public {
+        transactions.push(transaction);
+    }
+    function getTransactions() public view returns (bytes32[] memory) {
+        return transactions;
     }
 
     // add to contract

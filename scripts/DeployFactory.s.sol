@@ -11,7 +11,7 @@ contract CounterScript is Script {
             bytecode,
             abi.encode(msg.sender)
         );
-        bytes32 salt = keccak256(abi.encodePacked("FactoryV9"));
+        bytes32 salt = keccak256(abi.encodePacked("FactoryV10"));
         address contractAddress;
 
         assembly {

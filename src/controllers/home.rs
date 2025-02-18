@@ -91,7 +91,7 @@ fn convert_func_result_to_value(result: FunctionResult) -> Result<convex::Value,
     }
 }
 async fn test() -> Result<Response, AppError> {
-    let data = submit_blob("http://42.112.26.113:2668", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJBbGxvdyI6WyJwdWJsaWMiLCJyZWFkIiwid3JpdGUiLCJhZG1pbiJdLCJOb25jZSI6Ik0rTk52OWx5akdETUh6dHJhejZhb0oyd0RPNllvblE5cmZ4YXRTZUQ0Yk09IiwiRXhwaXJlc0F0IjoiMDAwMS0wMS0wMVQwMDowMDowMFoifQ.cff95b3mv9PS0Nvvh9LCiuYDo8Kn6zz-hb1lapBoRk8").await;
+    let data = submit_blob("https://flying-minnow-discrete.ngrok-free.app", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJBbGxvdyI6WyJwdWJsaWMiLCJyZWFkIiwid3JpdGUiLCJhZG1pbiJdLCJOb25jZSI6IjVLUGFXYVVGYW5TTlMwTk40Z1RqUk1QcUJWc0JRbDVRYWhmUGZ5UkhoNlk9IiwiRXhwaXJlc0F0IjoiMDAwMS0wMS0wMVQwMDowMDowMFoifQ.SxkCtdFk1sk87YGFh8GPgkExMi4BHTLsGj0ifiqAyCI").await;
     format::json(data).map_err(|e| AppError::ParseObject {
         reason: e.to_string(),
     })
