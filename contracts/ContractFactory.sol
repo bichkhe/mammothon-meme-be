@@ -24,11 +24,11 @@ contract ContractFactory is Ownable {
         uint256 initialPrice,
         address owner,
         bytes32 _salt
-    ) external onlyOwner() returns (address) {
+    ) external returns (address) {
         bytes memory bytecode = type(MemeCoin).creationCode;
         bytes memory initCode = abi.encodePacked(
             bytecode,
-            abi.encode(name, symbol, metadata, owner, initialPrice)
+            abi.encode(name, symbol, metadata, initialPrice, owner)
         );
 
         address contractAddress;
@@ -40,7 +40,6 @@ contract ContractFactory is Ownable {
                 _salt
             )
         }
-
         if (contractAddress == address(0)) {
             revert DeploymentFailed("Contract deployment failed: create2 returned address(0)");
         }

@@ -10,7 +10,7 @@ contract MemeCoin is ERC20, Ownable {
     string public metadataURI;
     uint8 private constant PRECISION = 5; // Hệ số thập phân
     uint256 private constant b = 1; // Hằng số tuyến tính
-    uint256 private initialPrice; // Giá khởi điểm
+    uint256 private initialPrice = 1; // Giá khởi điểm
     uint256 public feePercentage = 2;
     address public feeRecipient; // Address to collect fees
     // cu
@@ -43,7 +43,7 @@ contract MemeCoin is ERC20, Ownable {
 
     // return current price of token
     function getCurrentPrice() public view returns (uint256) {
-        return (totalSupply() + initialPrice);
+        return totalSupply() + initialPrice;
     }
 
     function sqrt(uint256 x) internal pure returns (uint256) {
@@ -125,6 +125,10 @@ contract MemeCoin is ERC20, Ownable {
     function getTransactions() public view returns (bytes32[] memory) {
         return transactions;
     }
-
-    // add to contract
+    struct Transaction {
+        address from;
+        address to;
+        uint256 amount;
+        uint256 timestamp;
+    }
 }
