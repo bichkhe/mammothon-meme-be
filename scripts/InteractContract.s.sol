@@ -8,7 +8,7 @@ contract InteractMeme is Script {
     function run() external {
         vm.rpcUrl("https://base-sepolia.infura.io/v3/e11fea93e1e24107aa26935258904434");
         vm.startBroadcast();
-        address factoryAddress = address(0xA7CEc61f5Ca4E7e77e85eD44724be6ED9059040C);
+        address factoryAddress = address(0xD295179D0265a0170af78565b7EDE98CA5678F0B);
         MemeCoin meme = MemeCoin(payable(factoryAddress));
         uint256 cost = 0.001 ether;
         meme.buy{value:cost}();

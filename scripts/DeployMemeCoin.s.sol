@@ -10,7 +10,7 @@ contract DeployMemeCoin is Script {
         vm.startBroadcast();
         address factoryAddress = address(0x852D5141abd7A73eA82a8350f7942998db10213f);
         address ownerAddress = address(0xCD86599DedD1A8E9d87dcEC37Dc8bE479e78cc30);
-        bytes32 salt = keccak256(abi.encodePacked("MemeCoinv17"));
+        bytes32 salt = keccak256(abi.encodePacked("MemeCoinv22"));
         ContractFactory factory = ContractFactory(factoryAddress);
         address addr = factory.createMemeContract(name, symbol, metadata, initialPrice, ownerAddress, salt);
         console.log("Contract deployed at:", addr);

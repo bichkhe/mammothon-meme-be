@@ -13,10 +13,10 @@ contract MemeCoin is ERC20, Ownable {
     uint256 private initialPrice = 1; // Giá khởi điểm
     uint256 public feePercentage = 2;
     address public feeRecipient; // Address to collect fees
-    // cu
+    
     event MetadataUpdated(string newMetadataURI);
-    event Buy(address indexed buyer, uint256 amountETH, uint256 amountToken);
-    event Sell(address indexed seller, uint256 amountETH, uint256 amoumtToken);
+    event Buy(address indexed buyer, uint256 amountETH, uint256 amountToken, uint256 price);
+    event Sell(address indexed seller, uint256 amountETH, uint256 amoumtToken, uint256 price);
     bytes32[] public transactions;
     constructor(
         string memory name_,
@@ -89,7 +89,7 @@ contract MemeCoin is ERC20, Ownable {
             (bool success, ) = msg.sender.call{value: msg.value - price}("");
             require(success, "Refund failed");
         }
-        emit Buy(msg.sender, msg.value, n);
+        emit Buy(msg.sender, msg.value, n, getCurrentPrice());
     }
 
     // sell token with amount, transfer money to sender
@@ -108,7 +108,7 @@ contract MemeCoin is ERC20, Ownable {
         _burn(msg.sender, amount);
         (bool success, ) = msg.sender.call{value: finalValue}("");
         require(success, "Transfer failed");
-        emit Sell(msg.sender, amount, finalValue);
+        emit Sell(msg.sender,finalValue, amount , getCurrentPrice());
     }
 
     receive() external payable {} // Allow contract to receive ETH
