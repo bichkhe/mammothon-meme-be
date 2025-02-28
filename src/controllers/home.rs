@@ -1,14 +1,16 @@
 use axum::{
-    extract::{Extension, Query},
-    routing::get,
+    body::Body, extract::{Extension, Query}, routing::get
 };
-use loco_rs::prelude::*;
-use std::collections::BTreeMap;
+use loco_rs::{prelude::*, validator::ValidateLength};
+use serde_json::Error;
+use std::{collections::BTreeMap, string};
 
 use crate::errors::AppError;
 use crate::views::{home::HomeResponse, tasks::TaskGetListResponse};
 use convex::{ConvexClient, FunctionResult, Value};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
+use celestia_rpc::{BlobClient, Client, TxConfig};
+use celestia_types::{nmt::Namespace, AppVersion, Blob};
 
 #[derive(Deserialize)]
 struct TaskQueryParams {
@@ -76,6 +78,7 @@ pub fn routes() -> Routes {
         .prefix("/api")
         .add("/get_tasks", get(get_tasks))
         .add("/create_task", post(create_task))
+        .add("/test", get(test))
 }
 
 fn convert_func_result_to_value(result: FunctionResult) -> Result<convex::Value, AppError> {
@@ -86,4 +89,38 @@ fn convert_func_result_to_value(result: FunctionResult) -> Result<convex::Value,
             query: e.to_string(),
         }),
     }
+}
+async fn test() -> Result<Response, AppError> {
+    let data = submit_blob("https://flying-minnow-discrete.ngrok-free.app", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJBbGxvdyI6WyJwdWJsaWMiLCJyZWFkIiwid3JpdGUiLCJhZG1pbiJdLCJOb25jZSI6IjVLUGFXYVVGYW5TTlMwTk40Z1RqUk1QcUJWc0JRbDVRYWhmUGZ5UkhoNlk9IiwiRXhwaXJlc0F0IjoiMDAwMS0wMS0wMVQwMDowMDowMFoifQ.SxkCtdFk1sk87YGFh8GPgkExMi4BHTLsGj0ifiqAyCI").await;
+    format::json(data).map_err(|e| AppError::ParseObject {
+        reason: e.to_string(),
+    })
+}
+async fn submit_blob(url: &str, token: &str) -> Option<String>{
+    let client = Client::new(url, if token == "" { None } else { Some(token) })
+        .await
+        .expect("Failed creating rpc client");
+
+    // create a blob that you want to submit
+    let my_namespace = Namespace::new_v0(&[1, 2, 3, 4, 5]).expect("Invalid namespace");
+    let blob = Blob::new(my_namespace, b"some data to store on blockchain".to_vec(), AppVersion::V1)
+        .expect("Failed to create a blob");
+
+    // submit it
+    let height = client.blob_submit(&[blob], TxConfig::default())
+        .await
+        .expect("Failed submitting the blob");
+    // fetch the blob back from the network
+    print!("Fetching the blob back from the network...");
+        if let Some(retrieved_blobs) = client.blob_get_all(height, &[my_namespace]).await.expect("Failed to retrieve blobs") {
+            if retrieved_blobs.len() == 1 {
+                let retrieved_blob = &retrieved_blobs[0];
+                print!("received data: {}" , String::from_utf8(retrieved_blob.data.clone()).expect("invalid string, cant convert"));
+                // Verify data consistency
+                assert_eq!(retrieved_blob.data, b"some data to store on blockchain");
+    
+                return Some(hex::encode(retrieved_blob.commitment.hash()));
+            }
+        }
+        None
 }

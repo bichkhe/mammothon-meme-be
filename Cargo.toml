@@ -26,7 +26,9 @@ tracing-subscriber = { version = "0.3.17", features = ["env-filter", "json"] }
 convex = "0.9.0"
 dotenvy = "0.15.7"
 snafu = "0.8.5"
-
+celestia-rpc = "0.9.0"
+celestia-types = "0.10.0"
+hex = "0.4.3"
 [[bin]]
 name = "mammothon_meme_be-cli"
 path = "src/bin/main.rs"
