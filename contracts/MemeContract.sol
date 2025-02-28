@@ -95,7 +95,7 @@ contract MemeCoin is ERC20, Ownable {
     // sell token with amount, transfer money to sender
     function sell(uint256 amount) public {
         require(amount > 0, "Amount too small");
-        require(amount < totalSupply(),  "Amount is too big");
+        require(amount <= totalSupply(),  "Amount is too big");
         uint256 value = calculateTokenSell(amount);
         uint256 fee = (value * feePercentage) / 100; // Calculate fee
         uint256 finalValue = value - fee; // Deduct fee

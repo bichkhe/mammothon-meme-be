@@ -8,16 +8,16 @@ contract InteractMeme is Script {
     function run() external {
         vm.rpcUrl("https://base-sepolia.infura.io/v3/e11fea93e1e24107aa26935258904434");
         vm.startBroadcast();
-        address factoryAddress = address(0xD295179D0265a0170af78565b7EDE98CA5678F0B);
+        address factoryAddress = address(0x6c3B55F87A7C1205bA4D488b9A609E25dc773fBd);
         MemeCoin meme = MemeCoin(payable(factoryAddress));
-        uint256 cost = 0.001 ether;
-        meme.buy{value:cost}();
+        // uint256 cost = 0.001 ether;
+        // meme.buy{value:cost}();
         // uint256 balance = meme.getContractBalance();
         // console.log("Balance of this contract:", balance);
         // uint256 w = cost * 1 ether;
         // console.log("Cost:", w);
-        // uint256 coin = meme.getCurrentPrice();
-        // console.log("curent price:", coin);
+        uint256 coin = meme.getCurrentPrice();
+        console.log("curent price:", coin);
         // uint256 balance = meme.balanceOf(address(0xCD86599DedD1A8E9d87dcEC37Dc8bE479e78cc30));
         // console.log("Address:", address(0xCD86599DedD1A8E9d87dcEC37Dc8bE479e78cc30));
         // console.log("Balance of this contract:", balance);
